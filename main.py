@@ -8,13 +8,13 @@ import win32clipboard
 import win32gui
 import win32process
 import psutil
-from typing import Optional
+from typing import Optional, Tuple
 from config import DELAY, FONT_FILE,BASEIMAGE_MAPPING,BASEIMAGE_FILE, AUTO_SEND_IMAGE, AUTO_PASTE_IMAGE, BLOCK_HOTKEY, HOTKEY, SEND_HOTKEY,PASTE_HOTKEY,CUT_HOTKEY,SELECT_ALL_HOTKEY,TEXT_BOX_TOPLEFT,IMAGE_BOX_BOTTOMRIGHT,BASE_OVERLAY_FILE,USE_BASE_OVERLAY, ALLOWED_PROCESSES
 
 from text_fit_draw import draw_text_auto
 from image_fit_paste import paste_image_auto
-
 current_image_file = BASEIMAGE_FILE
+
 def get_foreground_window_process_name():
     """
     获取当前前台窗口的进程名称
@@ -43,9 +43,9 @@ def copy_png_bytes_to_clipboard(png_bytes: bytes):
     win32clipboard.CloseClipboard()
 
 
-def cut_all_and_get_text() -> str:
+def cut_all_and_get_text() -> Tuple[str, object]:
     """
-    模拟 Ctrl+A / Ctrl+X 剪切全部文本，并返回剪切得到的内容。
+    模拟 Ctrl+A / Ctrl+X 剪切全部文本，并返回剪切得到的内容和原始剪贴板内容。
     delay: 每步之间的延时（秒），默认0.1秒。
     """
     # 备份原剪贴板
@@ -62,7 +62,7 @@ def cut_all_and_get_text() -> str:
     # 获取剪切后的内容
     new_clip = pyperclip.paste()
 
-    return new_clip
+    return new_clip, old_clip
 
 def try_get_image() -> Optional[Image.Image]:
     """
@@ -104,13 +104,13 @@ def Start():
 
     print("Start generate...")
 
-    text=cut_all_and_get_text()
+    text, old_clipboard_content=cut_all_and_get_text()
     image=try_get_image()
 
     if text == "" and image is None:
         print("no text or image")
         return
-
+    
     png_bytes=None
 
     if image is not None:
@@ -135,15 +135,14 @@ def Start():
     
     elif text != "":
         print("Get text: "+text)
-
-    # 查找发送内容是否包含更换差分指令#差分名#，如果有则更换差分并移除关键字
+        
+     # 查找发送内容是否包含更换差分指令#差分名#，如果有则更换差分并移除关键字
         for keyword, img_file in BASEIMAGE_MAPPING.items():
             if keyword in text:
                 current_image_file = img_file
                 text = text.replace(keyword, "").strip()
                 print(f"检测到关键词 '{keyword}'，使用底图: {current_image_file}")
                 break
-
         try:
             png_bytes = draw_text_auto(
                 image_source=current_image_file,
@@ -173,6 +172,8 @@ def Start():
         if AUTO_SEND_IMAGE:
             keyboard.send(SEND_HOTKEY)
 
+    # 恢复原始剪贴板内容
+    pyperclip.copy(old_clipboard_content)
     
     print("Generate image successed!")
 

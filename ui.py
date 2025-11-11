@@ -59,18 +59,15 @@ class AnanSketchbookUI:
     def setup_window_icon(self):
         """设置窗口图标"""
         try:
-            # 创建一个简单的图标
-            icon = Image.new('RGBA', (64, 64), color=(0, 0, 0, 0))  # 透明背景
-            draw = ImageDraw.Draw(icon)
-            
-            # 绘制一个简洁的笔记本图标
-            draw.rectangle([8, 8, 56, 56], fill=(100, 180, 255, 255), outline=(70, 130, 180, 255), width=2)  # 笔记本封面
-            draw.rectangle([15, 15, 20, 50], fill=(255, 255, 255, 200))  # 装订线
-            
-            # 添加代表"安安"的图案
-            draw.ellipse([30, 20, 50, 40], fill=(255, 200, 220, 200))  # 简单的头部轮廓
-            
-            self.root.iconphoto(False, icon)
+            # 使用预先准备的图标文件
+            if os.path.exists("icon.ico"):
+                # 优先使用ICO文件作为窗口图标
+                self.root.iconbitmap("icon.ico")
+            elif os.path.exists("icon.png"):
+                # 如果没有ICO文件，则使用PNG文件
+                import tkinter as tk
+                tk_image = tk.PhotoImage(file="icon.png")
+                self.root.iconphoto(False, tk_image)
         except Exception as e:
             print(f"设置窗口图标失败: {e}")
         
@@ -747,19 +744,47 @@ class AnanSketchbookUI:
 
     def create_default_icon(self):
         """创建默认的托盘图标"""
-        # 创建一个更美观的图标
-        icon = Image.new('RGBA', (64, 64), color=(0, 0, 0, 0))  # 透明背景
+        # 尝试加载预先准备的图标文件
+        try:
+            if os.path.exists("icon.png"):
+                icon = Image.open("icon.png")
+                # 调整图标大小为托盘图标标准尺寸
+                icon = icon.resize((64, 64), Image.Resampling.LANCZOS)
+                return icon
+            else:
+                # 如果没有图标文件，则创建一个默认图标
+                return self.generate_default_icon()
+        except Exception as e:
+            print(f"加载托盘图标失败: {e}")
+            # 出现异常时也创建默认图标
+            return self.generate_default_icon()
+    
+    def generate_default_icon(self):
+        """生成默认的托盘图标"""
+        # 创建一个64x64的图标
+        icon = Image.new('RGBA', (64, 64), (70, 130, 180, 255))  # Steel blue color
+        
+        # 创建绘图对象
         draw = ImageDraw.Draw(icon)
         
-        # 绘制一个更精美的笔记本图标
-        draw.rectangle([8, 8, 56, 56], fill=(100, 180, 255), outline=(70, 130, 180), width=2)  # 笔记本封面
-        draw.rectangle([15, 15, 20, 50], fill=(255, 255, 255))  # 装订线
+        # 绘制一个简单的笔记本图标
+        # 笔记本封面
+        draw.rectangle([10, 5, 54, 59], fill=(255, 255, 255, 255), outline=(0, 0, 0, 255), width=2)
         
-        # 添加代表"安安"的图案
-        draw.ellipse([30, 20, 50, 40], fill=(255, 200, 220))  # 头部
-        draw.ellipse([35, 25, 38, 28], fill=(0, 0, 0))  # 眼睛
-        draw.ellipse([42, 25, 45, 28], fill=(0, 0, 0))  # 眼睛
-        
+        # 笔记本螺旋装订线
+        for i in range(5):
+            y = 15 + i * 10
+            draw.ellipse([5, y-2, 10, y+2], fill=(169, 169, 169, 255))  # Dark gray spiral
+            
+        # 在笔记本上绘制一个简单的"P"字符表示"Paper"
+        try:
+            # 尝试使用默认字体
+            font = ImageFont.load_default()
+            draw.text((25, 20), "P", fill=(0, 0, 0, 255), font=font)
+        except:
+            # 如果无法加载字体，就画一个简单的形状
+            draw.rectangle([25, 20, 35, 30], fill=(0, 0, 0, 255))
+            
         return icon
 
     def restore(self):

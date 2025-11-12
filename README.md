@@ -113,11 +113,4 @@ python官方下载地址：https://www.python.org/downloads/
 
 ## 另附
 
-本项目fork自 [Anan-s-Sketchbook-Chat-Box](https://github.com/MarkCup-Official/Anan-s-Sketchbook-Chat-Box)  
-
-较原版本相比，添加了以下功能：
-- 添加了快捷键切换表情
-- 添加了release版本
----
-
 如需在 macOS 或 Linux 上使用，请参考 [跨平台分支](https://github.com/Sheyiyuan/Anan-s-Sketchbook-Chat-Box)。
